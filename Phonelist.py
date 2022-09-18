@@ -1,5 +1,5 @@
 Numlist = []
-UserListe = ['f8asb@hotmail.fr','juan']
+UserListe = ['mail@hotmail.fr','juan']
 
 Phonelist = {
         'friends':{
