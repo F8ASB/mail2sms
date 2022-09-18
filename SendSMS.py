@@ -25,83 +25,88 @@ state_machine.Init()
 
 # Send PIN if necessary
 if state_machine.GetSecurityStatus() == 'PIN':
-        state_machine.EnterSecurityCode('PIN', '1234')
+    state_machine.EnterSecurityCode('PIN', '1234')
 
 def main(argv):
 
-   user = ''
-   number = ''
-   liste = ''
-   messages = ''
+    user = ''
+    number = ''
+    liste = ''
+    messages = ''
 
-   try:
-      opts, args = getopt.getopt(argv,"h:u:n:l:m:",["user=","phonenumber=","listnumber=","msg="])
-   except getopt.GetoptError:
-      print ('SendSMS.py -u <user> -n <phone number> -l <list phone number> -m <message>')
-      sys.exit(2)
-   for opt, arg in opts:
-      if opt == '-h':
-         print ('SendSMS.py -u <user> -n <phone number> -l <list phone number> -m <message>')
-         sys.exit()
-      elif opt in ("-u", "--user"):
-         user = arg
-      elif opt in ("-n", "--phonenumber"):
-         number = arg
-      elif opt in ("-l", "--listnumber"):
-         liste = arg
-      elif opt in ("-m", "--msg"):
-         messages = arg
+    try:
+        opts, args = getopt.getopt(argv,"h:u:n:l:m:",["user=","phonenumber=","listnumber=","msg="])
+    except getopt.GetoptError:
+        print ('SendSMS.py -u <user> -n <phone number> -l <list phone number> -m <message>')
+        sys.exit(2)
 
-   if number != "":
-       print ("number detected")
-       envoiSMS(user,number,messages)
-   if liste != "":
-       print ("liste detected")
-       envoiSMSMass(user,liste,messages)
+    for opt, arg in opts:
+        if opt == '-h':
+            print ('SendSMS.py -u <user> -n <phone number> -l <list phone number> -m <message>')
+            sys.exit()
+        
+        elif opt in ("-u", "--user"):
+            user = arg
+        elif opt in ("-n", "--phonenumber"):
+            number = arg
+        elif opt in ("-l", "--listnumber"):
+            liste = arg
+        elif opt in ("-m", "--msg"):
+            messages = arg
 
+    if user in d.UserListe:
+      
+        if number != "":
+            print ("number detected")
+            envoiSMS(user,number,messages)
+        if liste != "":
+            print ("liste detected")
+            envoiSMSMass(user,liste,messages)
+
+    else:
+        print (user +">>> non autorisé")
+        historiqueSMS(date+"/"+user+"/"+liste+">>"+message+"*!*NON AUTORISE\n")
 def historiqueSMS(info):
     fichier = open("SMS.log", "a")
     fichier.write(info)
     fichier.close()
-def envoiSMS(user,numero,message):
 
-    if user in d.UserListe:
+def envoiSMS(user,numero,message):
 
 # Prepare message data
 # We tell that we want to use first SMSC number stored in phone
-        messageSMS = {
-            "Text": message+" *-*NE PAS REPONDRE Serveur F8ASB *-*",
-            "SMSC": {"Location": 1},
-            "Number": numero,
-        }
+    messageSMS = {
+        "Text": message+" *-*NE PAS REPONDRE Serveur F8ASB *-*",
+        "SMSC": {"Location": 1},
+        "Number": numero,
+    }
 
 # Actually send the message
-        state_machine.SendSMS(messageSMS)
-        historiqueSMS(date+"/"+user+"/"+numero+">>"+message+"\n")
-    else:
-        print (user +">>> non autorisé")
-        historiqueSMS(date+"/"+user+"/"+liste+">>"+message+"*!*NON AUTORISE\n")
+    state_machine.SendSMS(messageSMS)
+    historiqueSMS(date+"/"+user+"/"+numero+">>"+message+"\n")
+    
 
 def envoiSMSMass(user,liste,message):
 
 # Transform dict to list
-        for numero in d.Phonelist[liste].values():
-            d.Numlist.append(numero)
+    for numero in d.Phonelist[liste].values():
+        numeroStr =str(numero)
+        d.Numlist.append("0"+numeroStr[2:])
 
-        # Prepare SMS template
-        messageSMS = {"Text": message+" *-*NE PAS REPONDRE Serveur F8ASB *-*", "SMSC": {"Location": 1}}
+    # Prepare SMS template
+    messageSMS = {"Text": message+" *-*NE PAS REPONDRE Serveur F8ASB *-*", "SMSC": {"Location": 1}}
 
 # Send SMS to all recipients on command line
-        for number in d.Numlist:
-            messageSMS["Number"] = number
+    for number in d.Numlist:
+        messageSMS["Number"] = number
 
 
-            try:
-                state_machine.SendSMS(messageSMS)
-                historiqueSMS(date+"/"+user+"/"+liste+">>"+message+"\n")
-            except gammu.GSMError as exc:
-                print(f"Sending to {number} failed: {exc}")
-                historiqueSMS(date+"/"+user+"/"+liste+">>"+message+"*!*ERREUR\n")
+        try:
+            state_machine.SendSMS(messageSMS)
+            historiqueSMS(date+"/"+user+"/"+liste+">>"+message+"\n")
+        except gammu.GSMError as exc:
+            print(f"Sending to {number} failed: {exc}")
+            historiqueSMS(date+"/"+user+"/"+liste+">>"+message+"*!*ERREUR\n")
 
 if __name__ == "__main__":
-   main(sys.argv[1:])
+    main(sys.argv[1:])
