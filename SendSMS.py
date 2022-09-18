@@ -65,7 +65,7 @@ def main(argv):
 
     else:
         print (user +">>> non autorisé")
-        historiqueSMS(date+"/"+user+"/"+liste+">>"+message+"*!*NON AUTORISE\n")
+        historiqueSMS(date+"/"+user+"/"+liste+">>"+messages+"*!*NON AUTORISE\n")
 def historiqueSMS(info):
     fichier = open("SMS.log", "a")
     fichier.write(info)
